@@ -19,8 +19,11 @@ export class App extends Component {
             if (nextVal !== undefined) {
                 let action = actions.handleMessage(nextVal);
                 this.props.dispatch(action);
+            } else {
+                console.log('Clear interval as there are no valid entries anymore');
+                clearInterval(interval);
             }
-        }, 1000);
+        }, 1500);
 
         this.props.dispatch(actions.connect(APP_CONFIG.wsUrl));
     }
@@ -32,11 +35,8 @@ export class App extends Component {
         chart.series[1].addPoint(nextProps.removed.slice(-1)[0], false, true);
         chart.series[2].addPoint(nextProps.segmentSize.slice(-1)[0], true, true);
 
+        // We don't won't re-rendering the component as HighCharts will take care about new points by itself
         return false;
-    }
-
-    componentWillUpdate(nextProps, nextState) {
-
     }
 
     componentWillUnmount() {
@@ -49,18 +49,19 @@ export class App extends Component {
         chart.series[0].setData(this.props.added, false, true);
         chart.series[1].setData(this.props.removed, false, true);
         chart.series[2].setData(this.props.segmentSize, true, true);
+        chart.series[2].yAxis.setExtremes(-100, null);
     }
 
     render() {
-        return <ReactHighcharts config={HC_CONFIG} ref="chart" {...this.props} />;
+        return <ReactHighcharts config={HC_CONFIG} ref='chart' {...this.props} />;
     }
 }
 
-// App.propTypes = {
-//     added: PropTypes.arrayOf(PropTypes.array).required,
-//     removed: PropTypes.arrayOf(PropTypes.array).required,
-//     segmentSize: PropTypes.arrayOf(PropTypes.string).required
-// };
+App.propTypes = {
+    added: PropTypes.arrayOf(PropTypes.array).isRequired,
+    removed: PropTypes.arrayOf(PropTypes.array).isRequired,
+    segmentSize: PropTypes.arrayOf(PropTypes.array).isRequired
+};
 
 const mapStateToProps = (state) => {
     return {

@@ -8,10 +8,11 @@ let shallowWrapper;
 let middleware = [];
 let mockStore = configureStore(middleware);
 let store = mockStore({});
+let propsToConnect = {added: [[1000, 2]], removed: [[1000, 10]], segmentSize:[[1000, 5]]};
 let dispatch = jest.fn();
 
 beforeEach(() => {
-    shallowWrapper = shallow(<App dispatch={dispatch} store={store}/>);
+    shallowWrapper = shallow(<App dispatch={dispatch} store={store} {...propsToConnect}/>);
 });
 
 it('<App/> constructed from <ReactHighcharts/>', () => {
