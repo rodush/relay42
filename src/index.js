@@ -6,9 +6,6 @@ import store from './store';
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
 
-
-store.demo = "full text";
-
 ReactDOM.render(
     <Provider store={store}>
         <App />
