@@ -10,7 +10,7 @@ import dataGenerator from './data/series';
 
 let interval;
 
-class App extends Component {
+export class App extends Component {
     componentWillMount() {
         // Simulate periodical changes from the WS
         let seriesGenerator = dataGenerator(10, 0);

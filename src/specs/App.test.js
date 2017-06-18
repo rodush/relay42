@@ -1,12 +1,17 @@
 import React from 'react';
-import App from '../App';
+import {App} from '../App';
 import {shallow, mount, render} from 'enzyme';
 import ReactHighcharts from 'react-highcharts';
+import configureStore from 'redux-mock-store';
 
 let shallowWrapper;
+let middleware = [];
+let mockStore = configureStore(middleware);
+let store = mockStore({});
+let dispatch = jest.fn();
 
 beforeEach(() => {
-    shallowWrapper = shallow(<App/>);
+    shallowWrapper = shallow(<App dispatch={dispatch} store={store}/>);
 });
 
 it('<App/> constructed from <ReactHighcharts/>', () => {
