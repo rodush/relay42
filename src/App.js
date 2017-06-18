@@ -1,79 +1,76 @@
 import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import PropTypes from 'prop-types';
 import ReactHighcharts from 'react-highcharts';
 import './App.css';
-import dataGenerator from './data/series.js';
 import HC_CONFIG from './config/highcharts.js'
+import APP_CONFIG from './config/app';
+import actions from './actions';
+import dataGenerator from './data/series';
 
-import actionMakers from './actions';
-import store from 'react';
-// import connect from 'redux';
-// import thunk from 'redux-thunk';
+let interval;
 
-// TODO: To be extracted into config file
-const APP_CONFIG = {
-    wsUrl: 'ws://localhost:5000/'
-};
-
-let gen = dataGenerator();
-let ws = new WebSocket(APP_CONFIG.wsUrl, "v1");
-
-// Higher order component.
-// Composed to inject WebSocket instance into Application.
-function connectedApp(WrappedComponent, ws) {
-    return class extends Component {
-        componentWillMount() {
-            ws.onerror = (err) => console.log(err);
-            ws.onopen = () => {
-                console.log("Hello wizard!");
-            };
-            ws.onmessage = (evt = {}) => {
-                if (!evt.data) {
-                    return;
-                }
-
-                let msg = JSON.parse(evt.data);
-                store.dispatch(actionMakers.dataReceived(msg));
+class App extends Component {
+    componentWillMount() {
+        // Simulate periodical changes from the WS
+        let seriesGenerator = dataGenerator(10, 0);
+        interval = setInterval(() => {
+            let nextVal = seriesGenerator.next().value;
+            if (nextVal !== undefined) {
+                let action = actions.handleMessage(nextVal);
+                this.props.dispatch(action);
             }
-        }
+        }, 1000);
 
-        componentWillUnmount() {
-            ws.close();
-        }
+        this.props.dispatch(actions.connect(APP_CONFIG.wsUrl));
+    }
 
-        componentDidMount() {
-            let chart = this.refs.chart.getChart();
-            let nextVal = gen.next().value;
-            while (nextVal) {
-                chart.series[0].addPoint(buildPoint(nextVal, 'totalCallsAdded'), true);
-                chart.series[1].addPoint(buildPoint(nextVal, 'totalCallsRemoved'), true);
-                chart.series[2].addPoint(buildPoint(nextVal, 'segmentSize'), true);
-                nextVal = gen.next().value;
-            }
-        }
+    shouldComponentUpdate(nextProps) {
+        let chart = this.refs.chart.getChart();
 
-        render() {
-            return <WrappedComponent config={HC_CONFIG} ref="chart" {...this.props} />;
-        }
-    };
-}
+        chart.series[0].addPoint(nextProps.added.slice(-1)[0], false, true);
+        chart.series[1].addPoint(nextProps.removed.slice(-1)[0], false, true);
+        chart.series[2].addPoint(nextProps.segmentSize.slice(-1)[0], true, true);
 
-const App = connectedApp(ReactHighcharts, ws);
+        return false;
+    }
 
-//-----------
-// PRIVATE
-//-----------
+    componentWillUpdate(nextProps, nextState) {
 
-// Generates a point
-function buildPoint(item, key) {
-    switch (key) {
-        case 'totalCallsRemoved':
-            return [item['key']['timestamp'], -1 * item[key]];
-        default:
-            return [item['key']['timestamp'], 1 * item[key]];
+    }
+
+    componentWillUnmount() {
+        clearInterval(interval);
+        this.props.dispatch(actions.disconnect());
+    }
+
+    componentDidMount() {
+        let chart = this.refs.chart.getChart();
+        chart.series[0].setData(this.props.added, false, true);
+        chart.series[1].setData(this.props.removed, false, true);
+        chart.series[2].setData(this.props.segmentSize, true, true);
+    }
+
+    render() {
+        return <ReactHighcharts config={HC_CONFIG} ref="chart" {...this.props} />;
     }
 }
+
+// App.propTypes = {
+//     added: PropTypes.arrayOf(PropTypes.array).required,
+//     removed: PropTypes.arrayOf(PropTypes.array).required,
+//     segmentSize: PropTypes.arrayOf(PropTypes.string).required
+// };
+
+const mapStateToProps = (state) => {
+    return {
+        added: state.added,
+        removed: state.removed,
+        segmentSize: state.segmentSize
+    };
+};
 
 //-----------
 // PUBLIC
 //-----------
-export default App;
+export default connect(mapStateToProps)(App);

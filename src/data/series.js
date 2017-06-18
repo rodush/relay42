@@ -1,10 +1,11 @@
 // Generate series dynamically
-function* seriesGenerator(selectionInterval = 30) {
+const DEFAULT_LOOKBACK_INTERVAL = 30 * 86400 * 1000;
+
+function* seriesGenerator(selectionInterval = 30, lookbackInterval = DEFAULT_LOOKBACK_INTERVAL) {
     let segmentNumber = 1;
-    const LOOKBACK_INTERVAL = 30 * 86400 * 1000;
 
     while (segmentNumber <= selectionInterval) {
-        let timestamp = (new Date()).getTime() - LOOKBACK_INTERVAL + (segmentNumber * (86400 * 1000));
+        let timestamp = (new Date()).getTime() - lookbackInterval + (segmentNumber * (86400 * 1000));
         let totalCallsAdded = Math.round(Math.random(0, 50) * 100);
         let totalCallsRemoved = Math.round(Math.random(0, 50) * 100);
         let segmentSize = Math.round(Math.random(0, 20) * 10);
